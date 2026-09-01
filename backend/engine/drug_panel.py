@@ -31,10 +31,10 @@ class Drug:
 class ResistanceMechanism:
     id: str
     name: str
-    aro_accession: str
     gene_marker: str
     effect_type: str  # "remove_inhibition" | "scale_efflux" | "shift_constraint"
     affected_drugs: dict[str, float]  # drug_id -> effective strength multiplier
+    magnitude_confidence: str  # what's literature-grounded vs illustrative about the multipliers
     description: str
 
 
@@ -77,10 +77,10 @@ def load_resistance_mechanisms() -> dict[str, ResistanceMechanism]:
         mechanisms[m["id"]] = ResistanceMechanism(
             id=m["id"],
             name=m["name"],
-            aro_accession=m["aro_accession"],
             gene_marker=m["gene_marker"],
             effect_type=m["effect_type"],
             affected_drugs=dict(m["affected_drugs"]),
+            magnitude_confidence=m["magnitude_confidence"],
             description=m["description"],
         )
     return mechanisms

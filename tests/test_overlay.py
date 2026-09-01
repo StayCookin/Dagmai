@@ -1,4 +1,4 @@
-from backend.engine.drug_panel import load_strains
+from backend.engine.drug_panel import load_resistance_mechanisms, load_strains
 from backend.resistance.overlay import effective_multiplier, strain_resistance_profile
 
 
@@ -30,3 +30,15 @@ def test_multiple_mechanisms_take_the_more_severe_multiplier():
     # either individual mechanism's own floor.
     mult = effective_multiplier("ceftriaxone", profile)
     assert 0.0 <= mult <= 0.06
+
+
+def test_resistance_mechanisms_document_their_own_confidence_and_carry_no_fabricated_citations():
+    """Every mechanism must say what's literature-grounded (the ordinal
+    direction) vs illustrative (the exact decimal) about its multipliers --
+    see data/resistance_mechanisms.json's top-level description. This also
+    guards against a regression back to specific CARD/ARO accession numbers
+    that were removed because they were never checked against a live CARD
+    instance and would misrepresent hand-picked values as verified lookups."""
+    for mechanism in load_resistance_mechanisms().values():
+        assert mechanism.magnitude_confidence
+        assert not hasattr(mechanism, "aro_accession")

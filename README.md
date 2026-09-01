@@ -39,7 +39,8 @@ pytest tests/ -v
 ```
 data/
   drug_panel.json            15-drug panel: target gene, target reaction(s), simulation_mode
-  resistance_mechanisms.json 10 hand-curated CARD/ARO-inspired resistance mechanisms
+  resistance_mechanisms.json 10 hand-curated resistance mechanisms (real gene families,
+                              illustrative not literature-sourced multipliers -- see Layer 2)
   strains/demo_strains.json  5 example strain genotypes (mechanism id lists)
 
 backend/
@@ -171,12 +172,32 @@ module docstring for the full derivation.
 
 `data/resistance_mechanisms.json` hand-curates 10 mechanisms (ESBL, KPC
 carbapenemase, AcrAB-TolC efflux overexpression, GyrA target mutation,
-DfrA/Sul1 target bypass, MCR-1, ArmA, FosA, NfsA loss) with CARD/ARO-style
-labels and an effect on specific panel drugs, expressed as an "effective
-potency multiplier" in (0, 1]. A strain (`data/strains/demo_strains.json`)
-is just a list of mechanism ids; `backend/resistance/overlay.py` resolves
-them into per-drug multipliers, taking the most severe multiplier when
-several mechanisms hit the same drug.
+DfrA/Sul1 target bypass, MCR-1, ArmA, FosA, NfsA loss), each naming a real,
+well-established resistance gene family (`blaCTX-M-15`, `mcr-1`, `dfrA1`,
+etc. -- not fabricated) and its effect on specific panel drugs, expressed as
+an "effective potency multiplier" in (0, 1]. A strain
+(`data/strains/demo_strains.json`) is just a list of mechanism ids;
+`backend/resistance/overlay.py` resolves them into per-drug multipliers,
+taking the most severe multiplier when several mechanisms hit the same drug.
+
+**Two different kinds of confidence, kept explicit per mechanism.** The
+*ordinal direction* of every multiplier is standard, textbook-level clinical
+microbiology and is high confidence: CTX-M-15 reliably inactivates
+penicillins/cephalosporins and spares carbapenems; KPC-2 does not spare
+carbapenems; dfrA/sul1 are target-bypass mechanisms that near-completely
+defeat their drug; and so on. The *exact decimal* within that direction
+(0.03 vs 0.05, say) is an illustrative placeholder, not sourced from any
+specific fold-MIC-change study -- this environment has no network access to
+verify one against the literature. Each mechanism's `magnitude_confidence`
+field in the JSON says explicitly which parts are which, rather than
+presenting the whole multiplier as equally well-founded.
+
+An earlier version of this file also carried specific numeric CARD/ARO
+accession IDs (e.g. `"ARO:3001864"`) next to each mechanism, styled to look
+like a live database lookup. They weren't -- this environment has no network
+access to CARD either (confirmed: `CONNECT card.mcmaster.ca:443` is
+rejected), so those IDs could not be checked and have been removed rather
+than left in place implying a verification that never happened.
 
 **What's not implemented (originally scoped as live AMRFinderPlus/RGI
 annotation of an uploaded genome):** there's no FASTA upload, no BLAST
@@ -231,18 +252,92 @@ Endpoints:
 ## The panel: what's FBA-simulable and what isn't
 
 7 of the 15 drugs are `simulation_mode="direct"` (fosfomycin, trimethoprim,
-sulfamethoxazole, and 5 beta-lactams sharing the PBP reaction set, plus
-colistin via the lipid A pathway). The other 8 (nitrofurantoin,
-ciprofloxacin, levofloxacin, gentamicin, amikacin, and the remaining
-beta-lactam subclasses that don't differentiate further in this
-reconstruction) target processes -- DNA gyrase, the ribosome, multi-target
-prodrug activation -- that genuinely have **no gene entry** in this genome-scale
-reconstruction (confirmed directly: `tests/test_fba.py::
-test_gyrase_ribosome_rna_pol_genes_absent_from_model` checks that `gyrA`,
-`gyrB`, `rpsL`, and `rpoB` are absent from the loaded model's gene list).
-These are marked `non_metabolic` rather than silently given a fake score,
-and the UI/reasoning layer clearly labels them as literature-only or
+sulfamethoxazole, 5 beta-lactams sharing the PBP reaction set, and colistin
+via the lipid A pathway). The other 8 (nitrofurantoin, ciprofloxacin,
+levofloxacin, gentamicin, amikacin) target processes -- DNA gyrase/
+topoisomerase IV, the ribosome, multi-target prodrug activation -- that
+genuinely have no representation in this genome-scale *metabolic*
+reconstruction, because none of those processes are metabolic reactions with
+defined stoichiometry; no published bacterial GEM (this one included)
+represents DNA replication, transcription, or translation machinery as model
+reactions, only as a lumped biomass precursor demand.
+
+This is checked structurally, not by trusting a specific gene locus tag:
+`tests/test_fba.py::test_dna_replication_transcription_translation_machinery_absent_from_model`
+searches every reaction name in the loaded model for DNA/RNA-polymerase/
+ribosome/translation/replication/gyrase/topoisomerase keywords and asserts
+zero matches. An earlier version of this codebase instead hardcoded specific
+b-numbers (`gyrA = b2231`, etc.) and asserted those were absent -- which
+turned out to be the wrong kind of check: a memorized locus tag can simply be
+wrong, and a version of exactly that mistake was caught for a different drug
+during a correctness pass (see "A verification pass caught two real errors"
+below). The keyword search doesn't depend on getting any specific locus tag
+right.
+
+These 8 drugs are marked `non_metabolic` rather than silently given a fake
+score, and the UI/reasoning layer clearly labels them as literature-only or
 insufficient-data rather than presenting a number that doesn't exist.
+
+## A verification pass caught two real errors
+
+This codebase's gene/reaction mappings were built from training-data recall
+of *E. coli* locus tags, not a live database lookup (no network access to
+NCBI/EcoCyc/UniProt from this environment -- see below). Recall of an exact
+b-number is more fallible than recall of a well-known biological fact, so
+before trusting any drug-target mapping used for a real computation, each one
+was cross-checked against the loaded model itself: does the gene the mapping
+names actually catalyse the reaction the enzyme is known for? This caught
+two real errors, both now fixed and pinned with regression tests:
+
+1. **Nitrofurantoin's target genes were wrong.** The panel originally listed
+   `b1636` as `nfsA`. It isn't -- `b1636` is `pdxY` (pyridoxal kinase), a
+   completely unrelated gene; its single reaction (`PYDXK`) is nowhere near
+   nitroreductase chemistry. Re-checked via UniProt accession cross-reference
+   instead of b-number memory: `nfsB` (P38489) *is* in the model, as `b0578`
+   -- but the only reactions it carries here (`DHPTDNR`/`DHPTDNRN`,
+   dihydropteridine reductase) are a documented NfsB moonlighting activity
+   unrelated to nitrofuran reduction. No nitrofuran-activation reaction
+   exists anywhere in the model under any gene (confirmed by keyword search).
+   `nfsA`'s real locus tag couldn't be independently confirmed from this
+   environment, so `data/drug_panel.json` now leaves it as a named-but-unpinned
+   gene rather than guessing again. Net effect on results: none --
+   nitrofurantoin was and remains `non_metabolic`, so this only affected the
+   informational gene-name field, not any computation.
+
+2. **Colistin's target reaction was wrong, and this one *did* affect
+   results.** The panel used `b0180` with reactions `OGMEACPD`/`OPMEACPD` as
+   an "LpxC" proxy for lipid A pathway dependency. `b0180`'s actual reactions
+   are `3-hydroxyacyl-[ACP] dehydratase` across many acyl-chain lengths --
+   classic **FabZ** (fatty acid synthesis) substrate promiscuity, not LpxC's
+   deacetylase chemistry. Likely cause: pattern-matching on similar-sounding
+   reaction names ("hydroxyacyl...dehydratase" vs LpxC's real
+   "hydroxymyristoyl...deacetylase") without checking the actual enzyme
+   class. Found the real LpxC reaction by searching the model for lipid-A
+   pathway keywords: `UHGADA` ("UDP-3-O-acetylglucosamine deacetylase"),
+   gene `b0096` -- single-gene, single-reaction, confirmed essential (full
+   knockout drives growth to exactly zero), and a much better-conditioned
+   target than the original choice, whose tiny baseline flux (~2e-6, several
+   orders of magnitude smaller than every other target reaction in the
+   panel) turned out to also be the trigger for a GLPK solver pathology (see
+   `model_loader.py`'s `FAST_TIMEOUT_SECONDS` comment) -- fixing the science
+   here incidentally fixed a performance bug too. `data/drug_panel.json` and
+   colistin's dose-response numbers throughout the app reflect the corrected
+   reaction as of this pass.
+
+**What's still unverified.** This environment has no network access to
+NCBI/EcoCyc/UniProt/CARD (confirmed: `CONNECT` to each is rejected by the
+egress proxy's organization policy), so every gene/reaction mapping in
+`data/drug_panel.json` was checked the same way -- against the loaded
+model's own reaction chemistry, not an external database -- and every one
+that catalyses its textbook-expected reaction (fosfomycin/MurA/`UAGCVT`,
+trimethoprim/FolA/`DHFR`, sulfamethoxazole/FolP/`DHPS2`, the PBP family
+genes and their murein-crosslinking/transglycosylation reactions,
+colistin/LpxC/`UHGADA` after the fix above) is reported with that
+corroboration explicitly in mind. The non-metabolic drugs' gene names
+(`gyrA/gyrB`, `16S rRNA`/ribosomal proteins) describe well-known
+*functional* targets with high confidence; their specific locus tags, where
+still shown, have not been independently re-verified and should not be
+treated as citations.
 
 ## Known limitations (beyond the FBA-synergy finding above)
 

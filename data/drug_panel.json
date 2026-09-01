@@ -114,73 +114,73 @@
       "id": "colistin",
       "display_name": "Colistin",
       "class": "polymyxin",
-      "target_gene": "b0180",
+      "target_gene": "b0096",
       "target_gene_name": "lpxC",
       "target_enzyme": "UDP-3-O-acyl-N-acetylglucosamine deacetylase (LpxC)",
       "pathway": "lipid A / LPS biosynthesis",
-      "reactions": ["OGMEACPD", "OPMEACPD"],
+      "reactions": ["UHGADA"],
       "simulation_mode": "direct",
-      "notes": "Colistin's real target is mature LPS on the outer membrane, not LpxC catalysis directly; using the lipid A pathway as a proxy captures the same essential-pathway dependency and gives a graded dose-response, but is a simplification worth flagging."
+      "notes": "Colistin's real target is mature LPS on the outer membrane, not LpxC catalysis directly; using the committed, rate-limiting step of lipid A biosynthesis as a proxy captures the same essential-pathway dependency and gives a graded dose-response, but is a simplification worth flagging. Gene/reaction corrected after verification against the loaded model: an earlier version of this panel used b0180 and its 3-hydroxyacyl-ACP dehydratase reactions (fabZ, fatty acid synthesis) by mistake -- similar-sounding reaction name, wrong enzyme. b0096/UHGADA (UDP-3-O-acetylglucosamine deacetylase) is confirmed here to be single-gene, single-reaction, and essential (full knockout drives growth to exactly zero), matching LpxC's known biology."
     },
     {
       "id": "nitrofurantoin",
       "display_name": "Nitrofurantoin",
       "class": "nitrofuran",
-      "target_gene": "b1636,b0851",
+      "target_gene": "nfsA/nfsB (E. coli oxygen-insensitive nitroreductases)",
       "target_gene_name": "nfsA/nfsB",
       "target_enzyme": "Nitroreductases (activate prodrug to multi-target reactive intermediates)",
       "pathway": "not represented as a discrete metabolic reaction in this reconstruction",
       "reactions": [],
       "simulation_mode": "non_metabolic",
-      "notes": "Damages ribosomes, DNA and multiple enzymes simultaneously once activated; this multi-target mechanism is outside what a stoichiometric GEM can represent."
+      "notes": "Verified directly against the loaded model rather than assumed: nfsB is present (gene b0578), but the only reactions it carries in iJO1366 are DHPTDNR/DHPTDNRN (dihydropteridine reductase, a documented NfsB moonlighting activity unrelated to nitrofuran chemistry) -- no nitrofuran-reduction reaction exists anywhere in the model (checked by keyword search over all reaction names). So even though the gene is technically present, the prodrug-activation chemistry nitrofurantoin depends on is genuinely absent, and it damages ribosomes/DNA/multiple enzymes once activated regardless -- multi-target mechanisms a stoichiometric GEM cannot represent either way. nfsA's locus tag could not be independently confirmed against a live database from this environment (no network access) and is left unspecified rather than guessed."
     },
     {
       "id": "ciprofloxacin",
       "display_name": "Ciprofloxacin",
       "class": "fluoroquinolone",
-      "target_gene": "b2231,b3699",
+      "target_gene": "gyrA/gyrB (DNA gyrase subunits)",
       "target_gene_name": "gyrA/gyrB",
       "target_enzyme": "DNA gyrase",
       "pathway": "DNA replication (not in metabolic reconstruction)",
       "reactions": [],
       "simulation_mode": "non_metabolic",
-      "notes": "DNA gyrase is not a metabolic enzyme and has no gene entry in iJO1366; confirmed absent from the loaded model."
+      "notes": "DNA gyrase is not a metabolic enzyme. Verified structurally rather than by trusting a specific locus tag: a keyword search over every reaction name in the loaded model for DNA/RNA-polymerase/ribosome/translation/replication/gyrase/topoisomerase terms returns zero matches -- this reconstruction contains no representation of DNA replication machinery at all, consistent with the standard scope of genome-scale *metabolic* models (see README)."
     },
     {
       "id": "levofloxacin",
       "display_name": "Levofloxacin",
       "class": "fluoroquinolone",
-      "target_gene": "b2231,b3699",
-      "target_gene_name": "gyrA/gyrB",
+      "target_gene": "gyrA/gyrB and parC/parE (DNA gyrase and topoisomerase IV)",
+      "target_gene_name": "gyrA/gyrB, parC/parE",
       "target_enzyme": "DNA gyrase / topoisomerase IV",
       "pathway": "DNA replication (not in metabolic reconstruction)",
       "reactions": [],
       "simulation_mode": "non_metabolic",
-      "notes": "Same target class as ciprofloxacin; not FBA-simulable in this model."
+      "notes": "Same target class as ciprofloxacin; confirmed absent from the model by the same structural keyword search (see ciprofloxacin notes)."
     },
     {
       "id": "gentamicin",
       "display_name": "Gentamicin",
       "class": "aminoglycoside",
-      "target_gene": "b3342",
-      "target_gene_name": "rpsL (30S ribosomal protein S12)",
-      "target_enzyme": "30S ribosomal subunit",
+      "target_gene": "16S rRNA decoding site (rrsA-rrsH) and 30S ribosomal proteins",
+      "target_gene_name": "16S rRNA / 30S ribosomal subunit",
+      "target_enzyme": "30S ribosomal subunit (mistranslation via 16S rRNA A-site binding)",
       "pathway": "translation (not in metabolic reconstruction)",
       "reactions": [],
       "simulation_mode": "non_metabolic",
-      "notes": "Ribosomal protein genes are absent from the metabolic reconstruction; translation is modeled only as a lumped biomass precursor demand."
+      "notes": "Aminoglycosides bind the 16S rRNA decoding site, not a specific ribosomal protein; rRNA genes and ribosomal proteins are both absent from the model's reaction network (confirmed by the same structural keyword search noted for ciprofloxacin -- translation is represented only as a lumped biomass precursor demand, not as an explicit ribosome mechanism)."
     },
     {
       "id": "amikacin",
       "display_name": "Amikacin",
       "class": "aminoglycoside",
-      "target_gene": "b3342",
-      "target_gene_name": "rpsL (30S ribosomal protein S12)",
-      "target_enzyme": "30S ribosomal subunit",
+      "target_gene": "16S rRNA decoding site (rrsA-rrsH) and 30S ribosomal proteins",
+      "target_gene_name": "16S rRNA / 30S ribosomal subunit",
+      "target_enzyme": "30S ribosomal subunit (mistranslation via 16S rRNA A-site binding)",
       "pathway": "translation (not in metabolic reconstruction)",
       "reactions": [],
       "simulation_mode": "non_metabolic",
-      "notes": "Same class as gentamicin; not FBA-simulable in this model."
+      "notes": "Same class and target as gentamicin; not FBA-simulable in this model for the same reason."
     }
   ]
 }

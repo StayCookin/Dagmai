@@ -27,9 +27,9 @@ class StrainOut(BaseModel):
 class ResistanceMechanismOut(BaseModel):
     id: str
     name: str
-    aro_accession: str
     gene_marker: str
     effect_type: str
+    magnitude_confidence: str
     description: str
 
 

@@ -53,9 +53,9 @@ def list_resistance_mechanisms() -> list[ResistanceMechanismOut]:
         ResistanceMechanismOut(
             id=m.id,
             name=m.name,
-            aro_accession=m.aro_accession,
             gene_marker=m.gene_marker,
             effect_type=m.effect_type,
+            magnitude_confidence=m.magnitude_confidence,
             description=m.description,
         )
         for m in load_resistance_mechanisms().values()
