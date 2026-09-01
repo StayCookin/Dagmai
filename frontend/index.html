@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AMR Drug Combination Simulator</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>AMR Drug Combination Simulator</h1>
+    <span class="subtitle">Genome-scale FBA prioritisation for MDR uropathogens &mdash; MVP scope: ESBL/MDR E. coli, 15-drug panel</span>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>1. Choose a strain</h2>
+      <div class="controls-row">
+        <div class="field">
+          <label for="strain-select">Strain genotype</label>
+          <select id="strain-select"></select>
+        </div>
+        <button id="run-btn">Rank combinations</button>
+      </div>
+      <div id="strain-note" class="strain-note"></div>
+      <div id="strain-mechs" class="mech-tags"></div>
+    </section>
+
+    <section class="panel">
+      <h2>2. Ranked combinations</h2>
+      <div id="results-status" class="loading">Choose a strain and click &ldquo;Rank combinations&rdquo;.</div>
+      <table id="results-table" style="display:none">
+        <thead>
+          <tr>
+            <th>Combination</th>
+            <th>Predicted growth remaining</th>
+            <th>Bliss</th>
+            <th>Confidence</th>
+          </tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+      </table>
+    </section>
+
+    <section class="panel" id="detail-panel">
+      <button class="close-btn" id="detail-close">Close</button>
+      <h2>Combination detail</h2>
+      <div class="headline" id="detail-headline"></div>
+      <div class="rationale" id="detail-rationale"></div>
+      <div class="metric-grid" id="detail-metrics"></div>
+      <div id="detail-caveats"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Honest constraints</h2>
+      <p style="font-size:13px;color:var(--text-dim);margin:0">
+        This tool prioritises candidates for lab testing &mdash; it does not predict clinical efficacy.
+        It runs on iJO1366 (bundled with cobrapy) rather than iML1515 because this deployment has no
+        network path to the BiGG Models repository; resistance mechanisms are hand-curated rather than
+        pulled live from CARD/RGI against an uploaded genome; and steady-state FBA capacity constraints
+        structurally favor additive/antagonistic Bliss scores over synergy even for textbook synergistic
+        pairs (see README). Non-metabolic drug targets (ribosome, DNA gyrase, RNA polymerase) have no
+        growth-based score at all and fall back to literature notes.
+      </p>
+    </section>
+  </main>
+
+  <footer>AMR Drug Combination Simulator &mdash; MVP / research prototype, not for clinical use</footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

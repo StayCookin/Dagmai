@@ -1,0 +1,7 @@
+cobra==0.32.1
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+pydantic==2.13.5
+SQLAlchemy==2.0.52
+pytest==8.4.1
+httpx==0.28.1

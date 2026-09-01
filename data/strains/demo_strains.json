@@ -1,0 +1,40 @@
+{
+  "description": "Example strain genotypes for the MVP demo. Each strain is a name plus a list of resistance mechanism ids from data/resistance_mechanisms.json. In a later iteration these would come from AMRFinderPlus/RGI run against an uploaded assembly instead of being hand-picked.",
+  "strains": [
+    {
+      "id": "wt_susceptible",
+      "display_name": "Wild-type susceptible E. coli (control)",
+      "organism": "Escherichia coli",
+      "source_note": "No acquired resistance determinants; baseline for comparison.",
+      "mechanisms": []
+    },
+    {
+      "id": "esbl_ecoli_uti",
+      "display_name": "ESBL E. coli UTI isolate",
+      "organism": "Escherichia coli",
+      "source_note": "Representative community-onset ESBL UTI isolate: CTX-M-15 plus efflux overexpression, the primary MDR uropathogen this MVP targets.",
+      "mechanisms": ["blaCTX-M-15", "acrAB_tolC_overexpression"]
+    },
+    {
+      "id": "esbl_fq_cotrim_resistant",
+      "display_name": "ESBL + fluoroquinolone + co-trimoxazole resistant E. coli",
+      "organism": "Escherichia coli",
+      "source_note": "Common real-world MDR UTI phenotype: ESBL plus fluoroquinolone target mutation plus trimethoprim/sulfamethoxazole target bypass, narrowing empiric oral options sharply.",
+      "mechanisms": ["blaCTX-M-15", "acrAB_tolC_overexpression", "gyrA_S83L", "dfrA1", "sul1"]
+    },
+    {
+      "id": "pan_resistant_kpc",
+      "display_name": "Carbapenem-resistant (KPC) pan-resistant E. coli",
+      "organism": "Escherichia coli",
+      "source_note": "Worst-case panel: carbapenemase plus ESBL plus efflux plus aminoglycoside pan-resistance -- the scenario where combination prioritisation matters most and where the fewest drugs remain fully active.",
+      "mechanisms": ["blaKPC-2", "blaCTX-M-15", "acrAB_tolC_overexpression", "armA", "mcr-1"]
+    },
+    {
+      "id": "fosa_sul_resistant",
+      "display_name": "FosA + Sul1 resistant E. coli",
+      "organism": "Escherichia coli",
+      "source_note": "Narrower resistance profile isolating two target-bypass/inactivation mechanisms, useful for checking that unaffected drugs in the panel correctly stay fully active.",
+      "mechanisms": ["fosA", "sul1"]
+    }
+  ]
+}
